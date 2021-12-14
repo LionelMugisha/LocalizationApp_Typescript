@@ -3,5 +3,5 @@ export type MarkerType = {
   location: google.maps.LatLngLiteral;
   name: string;
   phone: string;
-  website: string;
+  icon: string;
 }

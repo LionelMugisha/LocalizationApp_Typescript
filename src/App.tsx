@@ -1,73 +1,34 @@
-import React from 'react'
-import { Wrapper, LoadingView } from './component/styles/App.styles'
-import { Marker, GoogleMap, InfoWindow, useJsApiLoader } from '@react-google-maps/api'
-import { containerStyle, center, options } from './component/config/MapSettings'
-import { useQuery } from 'react-query'
-import { fetchNearRestaurant } from './component/api/Api'
-import restaurantIcon from './component/image/beer.svg'
-import { MarkerType } from './component/interface/MarkerTypeInterface';
+import React, { useContext } from 'react'
+import { Route,Routes } from 'react-router-dom'
+import Dashboard from './component/Dashboard'
+import Login from './component/Login'
+import Register from './component/Register'
+import NotFound from './component/NotFound'
+import Navbar from './component/Navbar'
+import { AuthContext } from './component/context/AuthContext'
+import PrivateRoutes from './PrivateRoute'
 
 const App: React.FC = () => {
-
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_KEY!
-  })
-
-  const mapRef = React.useRef<google.maps.Map<Element> | null>(null);
-
-  const [ clickedPos, setClickedPos ] = React.useState<google.maps.LatLngLiteral>({} as google.maps.LatLngLiteral );
-
-  const { data: nearByPositions, isLoading, isError } = useQuery([clickedPos.lat,clickedPos.lng], () => fetchNearRestaurant(clickedPos.lat,clickedPos.lng), {
-    enabled: !!clickedPos.lat,
-    refetchOnWindowFocus: false
-  })
-
-  console.log(nearByPositions);
-
-  const onLoad = (map: google.maps.Map<Element>): void => {
-    mapRef.current = map;
-  }
-
-  const unMount = (): void => {
-    mapRef.current = null;
-  }
-
-  const onMapClick = (e:google.maps.MapMouseEvent) => {
-    setClickedPos({lat: e.latLng.lat(), lng: e.latLng.lng()});
-  }
-
-  const onMarkerClick = (marker: MarkerType) => console.log(marker);
-
-  if(!isLoaded) return <div className="flex justify-evenly mt-2">The Map is Loading ...</div>
+	const { currentUser } = useContext(AuthContext);
 
   return (
-    <Wrapper>
-      <GoogleMap
-        mapContainerStyle = {containerStyle}
-        options= {options as google.maps.MapOptions}
-        center = {center}
-        zoom = {12}
-        onLoad = {onLoad}
-        onUnmount = {unMount}
-        onClick={onMapClick}
-      >
-
-        {clickedPos.lat ? <Marker position={clickedPos} /> : null }
-        {nearByPositions?.map(marker => {
-          <Marker 
-            key={marker.id} 
-            position={marker.location}
-            onClick={() => onMarkerClick(marker)}
-            icon={{
-              url: restaurantIcon,
-              scaledSize: new window.google.maps.Size(30,30) 
-            }} 
+    <>
+        <div className="max-w-7xl mx-auto rounded-sm mt-1 ml-92">
+        <Navbar />
+          <Routes>
+            <Route path="/" element={currentUser ? <Dashboard /> : <Login />} />
+            <Route
+              path="/Register"
+              element={currentUser ? <Dashboard /> : <Register />}
+              />
+            <Route
+              path="/Dashboard"
+              element={<PrivateRoutes component={Dashboard} />}
             />
-        })}
-
-      </GoogleMap>
-    </Wrapper>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </div>
+    </>
   );
 };
 
